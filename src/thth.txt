@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+        <title>My chat app</title>
+        <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico" />
+        <!-- Font Awesome icons (free version)-->
+        <script src="https://use.fontawesome.com/releases/v5.13.0/js/all.js" crossorigin="anonymous"></script>
+        <!-- Google fonts-->
+        <link href="https://fonts.googleapis.com/css?family=Saira+Extra+Condensed:500,700" rel="stylesheet" type="text/css" />
+        <link href="https://fonts.googleapis.com/css?family=Muli:400,400i,800,800i" rel="stylesheet" type="text/css" />
+        <!-- Core theme CSS (includes Bootstrap)-->
+        <link href="css/styles.css" rel="stylesheet" />
+        <style>
+            #sidebar-content1 {
+                font-size: 25px;
+                font-weight: 200;
+                color: black;
+                float: left;
+            }
+        </style>
+    </head>
+    
+    <body id="page-top">
+        <!-- Navigation-->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top" id="sideNav">
+            <br><br><br><br><br><br><br><br><br><br>
+            
+            <h2 id="title"></h2>
+            <div class="subheading mb-5">
+
+            <script id="title" type="text/html">
+                <h2>{{room}}</h2>
+            </script>
+        </div>
+
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <h2 id="test"></h2>
+                <div id="sidebar-content1">
+                    <script id="sidebar-template" type="text/html">
+                                {{username}} <br>
+                        </div>
+                    </script>
+                
+            </div>
+        </nav>
+        <!-- Page Content-->
+        <div class="container-fluid p-0">
+            <!-- About-->
+            <section class="resume-section" id="about">
+                <div class="resume-section-content">
+                    <h1 class="mb-0">
+                        Insta
+                        <span class="text-primary">Chat</span>
+                    </h1>
+                    <h2 id="title"></h2>
+                    <div class="subheading mb-5">
+                        <script id="title" type="text/html">
+                            <h2>{{room}}</h2>
+                        </script>
+                    </div>
+                    <p class="lead mb-5">Room details
+                    <div id="chat-container">
+                        <div id="messages"></div>
+        
+                        <form id="message-form">
+                            <input type="text" placeholder="message" name="message" required autocomplete="off">
+                            <br><br>
+                            <button type="submit" id="msgg">submit</button>
+                            <button id="send-location">send location</button>
+                        </form>
+
+                    </div>
+                        <br><br><br><br>
+                        <script id="message-template" type="text/html">
+                            <div>
+                                <p>{{username}}</p>
+                                <p> {{createdAt}} <br> {{message}}</p>
+                                
+                            </div>
+                        </script>
+                    <!-- 2 seperate templates for the different requests being made -->
+                        <script id="loc-template" type="text/html">
+                            <div>
+                                <p>{{username}}</p>
+                                <p> {{createdAt}} <br> <a href={{locMsg}} target="_blank">current loc</a></p>
+                            </div>
+                    </script>
+                    
+                    
+                    
+                    <div class="social-icons">
+                        <a class="social-icon" href="#"><i class="fab fa-linkedin-in"></i></a>
+                        <a class="social-icon" href="#"><i class="fab fa-github"></i></a>
+                        <a class="social-icon" href="#"><i class="fab fa-twitter"></i></a>
+                        <a class="social-icon" href="#"><i class="fab fa-facebook-f"></i></a>
+                    </div>
+                </div>
+            </section>
+            <hr class="m-0" />
+            <!-- Experience-->
+            
+        </div>
+        <!-- Bootstrap core JS-->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
+        <!-- Third party plugin JS-->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script>
+        <!-- Core theme JS-->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/3.0.1/mustache.min.js"></script>
+    <!-- this is for formatting dates -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qs/6.6.0/qs.min.js"></script>
+    <!-- could download the above 3 but may as well just use the cloudflare link -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="./js/chat.js"></script>
+
+    </body>
+</html>
+
+const path = require("path")
+const http = require("http")
+const express = require("express")
+const socketio = require("socket.io")
+const Filter = require("bad-words")
+
+const { generateMessage } = require("./utils/messages")
+const { addUser, removeUser, getUser, getUsersInRoom } = require("./utils/users")
+const app = express()
+const server = http.createServer(app)
+
+const io = socketio(server)
+
+
+
+const port = process.env.PORT || 3000
+
+const pubDirPath = path.join(__dirname, "../public")
+
+// setting up public directory path and serving index
+app.use(express.static(pubDirPath))
+
+
+// initial connection to socket.io
+io.on("connection", (socket) => {
+    
+
+    // joining room with socket id,username and room, sanitising and pushing to the roomData event
+    socket.on("join", (username, room, callback) => {
+        // since username and room arent sanitised, we pass it into add user and use those return values
+
+        // socket.id is the id for that particular connection. we get back an object here which we can destructur
+        
+        const {error, user} = addUser(socket.id ,username, room)
+
+        if(error){
+            // need to set up the acknowledgment on chat.js for the join function
+            return callback(error)
+        }
+        // this only runs if user added
+        socket.join(user.room)
+
+        socket.emit("msg", generateMessage("welcome"))
+        socket.broadcast.to(user.room).emit("msg", generateMessage(`${user.username} has joined`))
+        // list all users in the room
+        
+        io.to(user.room).emit("roomData", user.room, getUsersInRoom(user.room))
+
+        // this lets the client (code) know you were able to join
+        callback()
+
+        
+    })
+    socket.on("sendMessage", (mess, callback) => {
+
+        const user = getUser(socket.id)
+        console.log(user)
+        const filter = new Filter()
+        // will return true or false if profane. just a method used on a class
+        console.log(mess)
+        if(filter.isProfane(mess)){
+            // stops execution here
+            return callback("no profanity")
+        }
+        // wont get down here if a bad word is present
+        // this essentially updates the param and sends it back. also emits to all clients cos of the io
+        io.to(user.room).emit("msg", generateMessage(user.username, mess))
+        // only emits when there is not profanity
+        callback()
+    })
+// cos of generate message you can now access the message value whether it be join, leave, message and thetimestamp too
+    socket.on("loc", (lat, lng, callback) => {
+
+        const user = getUser(socket.id)
+        console.log(user)
+        // in the future just use template strings
+        if(!lat || !lng){
+            return callback("location not recieved")
+        }
+        io.to(user.room).emit("locMsg", generateMessage(user.username ,`https://www.google.com/maps?q=${lat},${lng}`))
+        callback()
+    })
+
+    // have to make a seperate event to disconnect and have to do it on socket so its a connection event. still broadcast to everyone. these events are built in params
+    socket.on("disconnect", () => {
+
+        const user = removeUser(socket.id)
+// theres a chance the person who is disconnecting was never part of a room. ie join with invalid data then disconnect, the below  message dosent need to show
+// the return value from removeUser is a user, so if user true then remove
+        if(user) {
+            io.to(user.room).emit("msg", generateMessage(`${user.username} has left`))
+            io.to(user.room).emit("roomData", user.room, getUsersInRoom(user.room))
+
+        }
+
+        // dont need to broadcast cos client already disconnected
+    })
+
+})
+
+
+
+server.listen(port, () => {
+    console.log("server up on port " + port)
+})
+
+
+// // socket just contains the return value. will be different based on the event
+const socket = io()
+
+// Elements
+const $messageForm = document.querySelector("#message-form")
+const $messageFormInput = $messageForm.querySelector("input")
+const $messageFormButton = $messageForm.querySelector("button")
+
+const $sendLocation = document.querySelector("#send-location")
+const $messages = document.querySelector("#messages")
+const $sidebar = document.querySelector("#users")
+
+// templates
+const messageTemplate = document.querySelector("#message-template").innerHTML
+const locTemplate = document.querySelector("#loc-template").innerHTML
+const sidebarTemplate = document.querySelector("#sidebar-template").innerHTML
+const title = document.querySelector("#title").innerHTML
+
+// options
+// /?username=james&room=london is an object, so get the values with some destructuring
+const {username, room} = Qs.parse(location.search, { ignoreQueryPrefix: true})
+
+// AUTOMATC SCROLLING, call it right after rendering messages
+const autoScroll = () => {
+    // get new message element, gets the child (text input) of the last message
+    const $newMessage = $messages
+
+    // get the height of the new message, this dosent take into the account the margin
+    // we need to get the style of the element to determine the margin in case you wanna change how it looks in the future
+    const newMessageStyles = getComputedStyle($newMessage)
+    const newMessageMargin = parseInt(newMessageStyles.marginBottom)
+    const newMessageHeight = $newMessage.offsetHeight + newMessageMargin
+
+    // get the visible height
+    const visibleHeight = $messages.offsetHeight
+
+    // height of messages container
+    const contentHeight = $messages.scrollHeight
+
+    // figure out how far down we have scrolled, this gives the amount of distance scrolled from the top
+    const scrollOffset = $messages.scrollTop + visibleHeight
+// this code scrolls us to the bottom. get total container height and subtract the height of the last message
+    if(contentHeight - newMessageHeight <= scrollOffset){
+        // set the value for how far down we've scrolled
+        // if you jst wanna scroll to the bottom, just use this line
+        $messages.scrollTop = $messages.scrollHeight
+    }
+
+}
+
+// accepts 2 args, name of the event and function to run
+socket.on("msg", (message) => {
+    // also shows timestamps now
+    console.log(message)
+    // this stores final html to render
+    const html = Mustache.render(messageTemplate, {
+        username: message.username,
+        message: message.text,
+        createdAt: moment(message.createdAt).format("[Time:] LT, [Date:] L")
+    })
+    // here we just add html inside the messages div
+   
+    $messages.insertAdjacentHTML("beforeend", html)
+    autoScroll()
+})
+
+$messageForm.addEventListener("submit", (e) => {
+    e.preventDefault()
+    var mess = document.querySelector("input").value
+
+    // here we disable input whilst message is being sent
+    $messageFormButton.setAttribute("disabled", "disabled")
+    $messageFormInput.focus()
+
+    // whenever the button is clicked, it emits the sen event again, in turn emitting the msg event. which is then updated and output above
+
+    socket.emit("sendMessage", mess, (error) => {
+        // wanna re-enable regardless of an error
+        $messageFormButton.removeAttribute("disabled")
+
+        if(error) {
+            return console.log(error)
+        }
+
+        console.log("message delivered")
+    })
+    // access the server acknowledgment with the message parameter
+    document.querySelector("input").value = ""
+})
+
+socket.on("locMsg", (message) => {
+
+    console.log(message)
+    const html = Mustache.render(locTemplate, {
+        username: message.username,
+        locMsg: message.text,
+        // this is the moments library for formatting dates in js
+        createdAt: moment(message.createdAt).format("[Time:] LT, [Date:] L")
+    })
+    $messages.insertAdjacentHTML("beforeend", html)
+    autoScroll()
+    
+})
+// listing out the users
+socket.on("roomData", (room, users) => {
+    var use = []
+    console.log(users)
+    
+    var dunno = users.slice(-1)[0] 
+    console.log(use)
+
+    // TODO: stop the users array from repeating all values once another person joins/leaves
+    const html = Mustache.render(sidebarTemplate, {
+        room,
+        users: users
+        
+    })
+    document.querySelector("#sidebar-content1").insertAdjacentHTML("beforeend", html)
+
+})
+// GEOLOCATION
+$sendLocation.addEventListener("click", () => {
+    // if this dosent exist it means they dont have browser supprot
+    if(!navigator.geolocation){
+        return alert("Upgrade your browser its 2020")
+    }
+// these run until the below get current position works
+    $sendLocation.setAttribute("disabled", "disabled")
+    $sendLocation.focus()
+
+    navigator.geolocation.getCurrentPosition((position) => {
+        // geocoding browser output address
+        // could also provide this as an object
+        socket.emit("loc", position.coords.latitude, position.coords.longitude, (error) => {
+
+            $sendLocation.removeAttribute("disabled")
+
+            if(error){
+                return console.log(error)
+            }
+
+            console.log("location delivered")
+        })
+        var loc = "https://maps.googleapis.com/maps/api/geocode/json?latlng=" + position.coords.latitude + "," + position.coords.longitude + "&key=AIzaSyC6xrYHhT-_CeoktqgAwGjbOCNrmVUkXno"
+        
+    })
+
+})
+// username and room as params here
+socket.emit("join", username, room, (error) => {
+    if(error){
+        alert(error)
+        // this is your redirect
+        location.href = "/"
+    }
+
+})
