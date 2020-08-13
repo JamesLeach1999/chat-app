@@ -78,9 +78,9 @@ io.on("connection", (socket) => {
         const filter = new Filter()
         // will return true or false if profane. just a method used on a class
         console.log(mess)
-        if(!filter.isProfane(mess)){
+        if(filter.isProfane(mess)){
             // stops execution here
-            return callback("profanity only")
+            return callback("No profanity")
         }
         // wont get down here if not bad word
         // this essentially updates the param and sends it back. also emits to all clients cos of the io
