@@ -23,16 +23,12 @@
             }
         </style>
     </head>
-    <!-- <h1>test</h1> -->
     
     <body id="page-top">
         <!-- Navigation-->
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top" id="sideNav">
             <br><br><br><br><br><br><br><br><br><br>
-            <!-- <a class="navbar-brand js-scroll-trigger" href="#page-top">
-                <span class="d-block d-lg-none"></span>
-                <span class="d-none d-lg-block"><img class="img-fluid img-profile rounded-circle mx-auto mb-2" src="assets/img/profile.jpg" alt="" /></span>
-            </a> -->
+            
             <h2 id="title"></h2>
             <div class="subheading mb-5">
 
@@ -46,14 +42,10 @@
                 <h2 id="test"></h2>
                 <div id="sidebar-content1">
                     <script id="sidebar-template" type="text/html">
-                        <!-- {{#users}} -->
                                 {{username}} <br>
-                            <!-- {{/users}} -->
                         </div>
-                        <!-- <p id="sidebar-name">{{user}}</p> -->
                     </script>
                 
-                <!-- </ul> -->
             </div>
         </nav>
         <!-- Page Content-->
@@ -74,8 +66,7 @@
                     <p class="lead mb-5">Room details
                     <div id="chat-container">
                         <div id="messages"></div>
-        <!-- <textarea name="msg" id="msg" cols="30" rows="5"></textarea>
-        <button id="msgg">submit</button> -->
+        
                         <form id="message-form">
                             <input type="text" placeholder="message" name="message" required autocomplete="off">
                             <br><br>
@@ -85,11 +76,8 @@
 
                     </div>
                         <br><br><br><br>
-                    <!-- this is how we target the templates usnig id. the type can piss off i got no idea. need this to render mustache -->
-                    <!-- we access this in chat then can change the values within -->
                         <script id="message-template" type="text/html">
                             <div>
-                                <!-- js is shit at formatting dates so gotta use a library -->
                                 <p>{{username}}</p>
                                 <p> {{createdAt}} <br> {{message}}</p>
                                 
@@ -130,7 +118,6 @@
     <!-- could download the above 3 but may as well just use the cloudflare link -->
     <script src="/socket.io/socket.io.js"></script>
     <script src="./js/chat.js"></script>
-        <!-- <script src="js/scripts.js"></script> -->
 
     </body>
 </html>
